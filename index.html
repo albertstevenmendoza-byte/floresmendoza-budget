@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gridiron Budget</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ne:#0b1f4b;--ne2:#152d66;--ne3:#1a3070;
+  --sf:#aa0000;--sf2:#c80000;
+  --gold:#c9a84c;--gold2:#e8c96a;--gold3:#7a5f28;
+  --silver:#9aafc4;--silver2:#d4dde8;
+  --cream:#f4f1ea;--cream2:#ebe4d4;
+  --white:#fff;--bd:rgba(11,31,75,0.1);
+  --txt:#0b1f4b;--muted:#5a6a82;
+  --grn:#1e7a45;--red2:#fce8e8;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Source Sans 3',sans-serif;background:var(--cream);color:var(--txt);font-size:15px;line-height:1.5;min-height:100vh;}
+
+/* ── HEADER ── */
+.hdr{background:var(--ne);position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,0.3);}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;}
+.brand{display:flex;align-items:center;gap:8px;}
+.logo-svg{width:40px;height:40px;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));}
+.x-sep{font-family:'Oswald',sans-serif;font-size:17px;color:var(--gold);font-weight:700;margin:0 2px;}
+.brand-text{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:0.05em;line-height:1;}
+.brand-sub{font-size:10px;color:rgba(255,255,255,0.35);font-weight:300;letter-spacing:0.04em;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.mo-pill{background:rgba(201,168,76,0.12);border:0.5px solid rgba(201,168,76,0.35);color:var(--gold2);font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.07em;font-family:'Oswald',sans-serif;}
+.sync-btn{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);font-size:11px;font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:0.06em;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.sync-btn:hover{background:rgba(255,255,255,0.12);color:white;}
+.sync-btn.syncing{color:var(--gold2);border-color:rgba(201,168,76,0.4);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.sync-btn.ok .sync-dot{background:#7de0a8;}
+.sync-btn.err .sync-dot{background:#ff8888;}
+.sync-btn.syncing .sync-dot{animation:pulse 0.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* fund switcher */
+.fund-bar{display:flex;padding:8px 16px 0;gap:6px;}
+.fb{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;transition:all 0.18s;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.07em;color:rgba(255,255,255,0.4);user-select:none;}
+.fb svg{width:22px;height:22px;opacity:0.4;transition:opacity 0.18s;flex-shrink:0;}
+.fb.act-ne{background:rgba(26,48,112,0.7);border-color:var(--silver2);color:var(--silver2);}
+.fb.act-ne svg{opacity:1;}
+.fb.act-sf{background:rgba(170,0,0,0.35);border-color:var(--gold2);color:var(--gold2);}
+.fb.act-sf svg{opacity:1;}
+.fb.act-both{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold);}
+.fb.act-both svg{opacity:1;}
+.fb:hover:not(.act-ne):not(.act-sf):not(.act-both){background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);}
+
+/* nav */
+.nav-tabs{display:flex;border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;}
+.nav-tab{flex:1;text-align:center;padding:9px 4px;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.09em;color:rgba(255,255,255,0.35);text-transform:uppercase;user-select:none;}
+.nav-tab.act{color:var(--gold2);border-bottom-color:var(--gold);}
+.nav-tab:hover:not(.act){color:rgba(255,255,255,0.7);}
+
+/* ── PAGES ── */
+.pg{display:none;padding:14px 14px 40px;}
+.pg.show{display:block;animation:fu 0.22s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* toast */
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+.toast{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.06em;padding:8px 18px;border-radius:20px;color:white;opacity:0;transition:opacity 0.25s;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.ok{background:rgba(30,122,69,0.92);}
+.toast.err{background:rgba(170,0,0,0.92);}
+.toast.info{background:rgba(11,31,75,0.92);}
+
+/* spinner overlay */
+.spinner-overlay{display:none;position:fixed;inset:0;background:rgba(11,31,75,0.55);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner-overlay.show{display:flex;}
+.spinner{width:44px;height:44px;border:4px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner-text{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:0.08em;color:var(--gold2);}
+
+/* ── TYPOGRAPHY ── */
+.sl{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-left:2px;}
+
+/* ── METRIC CARDS ── */
+.mg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px;}
+.mc{border-radius:11px;padding:13px 14px;position:relative;overflow:hidden;}
+.mc-ne{background:var(--ne);}
+.mc-sf{background:var(--sf);}
+.mc-dk{background:#18253a;}
+.mc-grn{background:#112e1e;}
+.mc-darkred{background:#2a1010;}
+.mc-stripe{position:absolute;top:0;right:0;width:3px;height:100%;}
+.s-gold{background:var(--gold);}
+.s-silver{background:var(--silver);}
+.ml{font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.1em;color:rgba(255,255,255,0.38);text-transform:uppercase;margin-bottom:4px;}
+.mv{font-family:'Oswald',sans-serif;font-size:26px;color:white;line-height:1;}
+.mv-gold{color:var(--gold2);}
+.mv-grn{color:#7de0a8;}
+.mv-red{color:#ff8888;}
+.ms{font-size:10px;color:rgba(255,255,255,0.28);margin-top:3px;}
+
+/* ── PROGRESS ── */
+.prog-card{background:var(--white);border-radius:10px;padding:13px 15px;border:0.5px solid var(--bd);margin-bottom:14px;}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.pt{font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;}
+.pp{font-size:12px;color:var(--muted);font-weight:500;}
+.btrack{height:10px;background:var(--cream2);border-radius:5px;overflow:hidden;margin-bottom:5px;}
+.bfill{height:100%;border-radius:5px;transition:width 0.5s ease;}
+.bf-ne{background:var(--ne);}
+.bf-sf{background:var(--sf);}
+.bf-gold{background:var(--gold);}
+.bsub{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+.dual-prog{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--cream2);margin-bottom:5px;}
+.dp-ne{background:var(--ne);transition:width 0.4s;}
+.dp-sf{background:var(--sf2);transition:width 0.4s;}
+.dleg{display:flex;gap:12px;font-size:10px;color:var(--muted);margin-top:4px;flex-wrap:wrap;}
+.ddot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle;}
+
+/* ── ITEM CARDS ── */
+.card{background:var(--white);border-radius:10px;border:0.5px solid var(--bd);margin-bottom:8px;overflow:hidden;transition:box-shadow 0.15s;}
+.card:hover{box-shadow:0 2px 10px rgba(11,31,75,0.08);}
+.crow{padding:11px 13px;display:flex;align-items:center;justify-content:space-between;}
+.ctitle{font-size:14px;font-weight:500;}
+.cmeta{font-size:11px;color:var(--muted);margin-top:2px;}
+.cright{display:flex;align-items:center;gap:8px;}
+.camt{font-family:'Oswald',sans-serif;font-size:18px;}
+.ca-pos{color:var(--grn);}
+.ca-neg{color:var(--sf);}
+
+/* tags */
+.tag{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.07em;padding:2px 8px;border-radius:4px;text-transform:uppercase;white-space:nowrap;}
+.t-ne{background:var(--ne);color:var(--silver2);}
+.t-sf{background:var(--sf);color:var(--gold2);}
+.t-paid{background:#d0f0df;color:#145c30;}
+.t-due{background:#fff4e0;color:#7a5200;}
+.t-ov{background:var(--red2);color:#880000;}
+
+.oa{width:22px;height:22px;flex-shrink:0;}
+
+/* ── CHARTS ── */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.chart-box{background:var(--white);border-radius:10px;border:0.5px solid var(--bd);padding:12px;}
+.chart-box.full{grid-column:1/-1;}
+.chart-title{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.09em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;text-align:center;}
+canvas{display:block;width:100% !important;}
+
+/* ── FORMS ── */
+.fcard{background:var(--white);border-radius:11px;border:0.5px solid var(--bd);padding:15px;margin-bottom:12px;}
+.fhead{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.03em;margin-bottom:13px;padding-bottom:11px;border-bottom:2.5px solid;display:flex;align-items:center;gap:8px;}
+.fhead svg{width:30px;height:30px;flex-shrink:0;}
+.fh-ne{border-color:var(--ne);color:var(--ne);}
+.fh-sf{border-color:var(--sf);color:var(--sf);}
+.flabel{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;display:block;text-transform:uppercase;}
+.finput{width:100%;padding:8px 11px;border:0.5px solid var(--bd);border-radius:7px;font-family:'Source Sans 3',sans-serif;font-size:14px;background:var(--cream);color:var(--txt);outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+.finput:focus{border-color:var(--ne);box-shadow:0 0 0 3px rgba(11,31,75,0.08);}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.frow{margin-bottom:10px;}
+.btn-ne{width:100%;padding:10px;background:var(--ne);color:var(--gold2);border:none;border-radius:8px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-ne:hover{background:var(--ne3);}
+.btn-ne:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-sf{width:100%;padding:10px;background:var(--sf);color:var(--gold2);border:none;border-radius:8px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-sf:hover{background:var(--sf2);}
+.btn-sf:disabled{opacity:0.5;cursor:not-allowed;}
+
+.ilist .irow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--bd);}
+.ilist .irow:last-child{border-bottom:none;}
+.iname{font-size:14px;font-weight:500;}
+.isub{font-size:11px;color:var(--muted);margin-top:1px;}
+.iright{display:flex;align-items:center;gap:6px;}
+.iamt{font-family:'Oswald',sans-serif;font-size:17px;}
+
+.sbar{border-radius:10px;padding:12px 14px;margin-top:8px;}
+.sb-ne{background:var(--ne);}
+.sb-sf{background:var(--sf);}
+.sbrow{display:flex;justify-content:space-between;align-items:center;padding:2px 0;}
+.sblbl{font-size:11px;color:rgba(255,255,255,0.4);}
+.sbval{font-family:'Oswald',sans-serif;font-size:16px;color:white;}
+.sbv-gold{color:var(--gold2);}
+.sbv-grn{color:#7de0a8;}
+.sbv-red{color:#ff8888;}
+.sbdiv{height:0.5px;background:rgba(255,255,255,0.1);margin:6px 0;}
+
+.bdel{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:4px 7px;border-radius:5px;line-height:1;transition:color 0.15s,background 0.15s;}
+.bdel:hover{color:var(--sf);background:var(--red2);}
+.btog{background:none;border:none;cursor:pointer;font-size:14px;padding:4px 7px;border-radius:5px;line-height:1;transition:background 0.15s;}
+.btog:hover{background:var(--cream2);}
+
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
+
+/* big surplus block */
+.surplus-block{border-radius:11px;padding:14px 16px;margin-bottom:14px;}
+
+/* settings panel */
+.settings-card{background:var(--white);border-radius:11px;border:0.5px solid var(--bd);padding:15px;margin-bottom:12px;}
+.settings-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.04em;margin-bottom:12px;color:var(--txt);}
+.settings-row{display:flex;flex-direction:column;margin-bottom:10px;}
+.settings-hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.btn-save{background:var(--ne);color:var(--gold2);border:none;border-radius:8px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px;transition:background 0.15s;}
+.btn-save:hover{background:var(--ne3);}
+.status-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:var(--cream);margin-bottom:10px;font-size:13px;}
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.sd-ok{background:#1e7a45;}
+.sd-err{background:#aa0000;}
+.sd-none{background:#9aafc4;}
+
+@media(max-width:380px){
+  .mg{grid-template-columns:1fr;}
+  .fg2{grid-template-columns:1fr;}
+  .chart-row{grid-template-columns:1fr;}
+  .chart-box.full{grid-column:1;}
+}
+</style>
+</head>
+<body>
+
+<!-- SVG LOGO DEFS -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none">
+  <defs>
+    <symbol id="logo-ne" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#0b1f4b" stroke="#c9a84c" stroke-width="3"/>
+      <ellipse cx="50" cy="39" rx="28" ry="6" fill="#c9a84c"/>
+      <rect x="32" y="16" width="36" height="24" rx="4" fill="#c9a84c"/>
+      <rect x="32" y="27" width="36" height="6" fill="#aa0000"/>
+      <rect x="32" y="33" width="36" height="3" fill="white"/>
+      <ellipse cx="50" cy="56" rx="18" ry="16" fill="#e8c96a"/>
+      <ellipse cx="44" cy="51" rx="3" ry="2.5" fill="#0b1f4b"/>
+      <ellipse cx="56" cy="51" rx="3" ry="2.5" fill="#0b1f4b"/>
+      <path d="M48 55 Q50 58 52 55" stroke="#0b1f4b" stroke-width="1.2" fill="none"/>
+      <path d="M44 61 Q50 65 56 61" stroke="#0b1f4b" stroke-width="1.2" fill="none"/>
+      <path d="M32 39 Q24 35 26 27 Q28 45 34 45" fill="#e8c96a"/>
+      <path d="M68 39 Q76 35 74 27 Q72 45 66 45" fill="#e8c96a"/>
+      <text x="50" y="84" text-anchor="middle" font-family="Oswald,sans-serif" font-weight="700" font-size="13" fill="white" letter-spacing="2">NE</text>
+    </symbol>
+    <symbol id="logo-sf" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="48" fill="#aa0000" stroke="#c9a84c" stroke-width="3"/>
+      <ellipse cx="50" cy="50" rx="36" ry="36" fill="none" stroke="#c9a84c" stroke-width="4"/>
+      <ellipse cx="50" cy="50" rx="30" ry="30" fill="#aa0000"/>
+      <text x="36" y="61" font-family="Oswald,sans-serif" font-weight="700" font-size="33" fill="#c9a84c">S</text>
+      <text x="54" y="61" font-family="Oswald,sans-serif" font-weight="700" font-size="33" fill="#c9a84c">F</text>
+      <rect x="49" y="31" width="22" height="5" rx="1" fill="#c9a84c"/>
+      <rect x="49" y="44" width="15" height="4" rx="1" fill="#c9a84c"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- TOAST -->
+<div class="toast-wrap"><div class="toast" id="toast"></div></div>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner"></div>
+  <div class="spinner-text" id="spinner-text">SYNCING...</div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">
+      <svg class="logo-svg" viewBox="0 0 100 100"><use href="#logo-ne"/></svg>
+      <span class="x-sep">×</span>
+      <svg class="logo-svg" viewBox="0 0 100 100"><use href="#logo-sf"/></svg>
+      <div style="margin-left:6px">
+        <div class="brand-text">Gridiron Budget</div>
+        <div class="brand-sub">Albert &amp; Patty · Household Finance</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="mo-pill" id="moPill"></div>
+      <button class="sync-btn" id="syncBtn" onclick="syncNow()">
+        <span class="sync-dot"></span><span id="syncLabel">SYNC</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="fund-bar">
+    <button class="fb act-ne" id="fb-ne" onclick="setFund('ne')">
+      <svg viewBox="0 0 100 100"><use href="#logo-ne"/></svg> Albert
+    </button>
+    <button class="fb" id="fb-sf" onclick="setFund('sf')">
+      <svg viewBox="0 0 100 100"><use href="#logo-sf"/></svg> Patty
+    </button>
+    <button class="fb" id="fb-both" onclick="setFund('both')">
+      <svg viewBox="0 0 100 100"><use href="#logo-ne"/></svg>
+      <svg viewBox="0 0 100 100"><use href="#logo-sf"/></svg> Combined
+    </button>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab act" id="nt-dash" onclick="showPage('dash')">Overview</div>
+    <div class="nav-tab" id="nt-income" onclick="showPage('income')">Income</div>
+    <div class="nav-tab" id="nt-bills" onclick="showPage('bills')">Bills</div>
+    <div class="nav-tab" id="nt-charts" onclick="showPage('charts')">Stats</div>
+    <div class="nav-tab" id="nt-settings" onclick="showPage('settings')">Setup</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg show" id="pg-dash"><div id="dash-content"></div></div>
+
+<!-- INCOME -->
+<div class="pg" id="pg-income">
+  <div class="fcard">
+    <div class="fhead fh-ne" id="inc-fhead">
+      <svg viewBox="0 0 100 100"><use href="#logo-ne"/></svg>
+      <span id="inc-fhead-text">Add Income — Albert</span>
+    </div>
+    <div class="frow"><label class="flabel">Source Name</label><input class="finput" id="inc-name" placeholder="e.g. Salary, Freelance, Rental..."></div>
+    <div class="fg2">
+      <div><label class="flabel">Monthly Amount ($)</label><input class="finput" id="inc-amt" type="number" placeholder="0.00" step="0.01" min="0"></div>
+      <div><label class="flabel">Frequency</label>
+        <select class="finput" id="inc-freq">
+          <option value="monthly">Monthly</option>
+          <option value="biweekly">Bi-weekly</option>
+          <option value="weekly">Weekly</option>
+          <option value="annual">Annual</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-ne" id="inc-btn" onclick="addIncome()">+ Add to Roster</button>
+  </div>
+  <p class="sl">Active Income Sources</p>
+  <div class="fcard" style="padding:10px 13px"><div class="ilist" id="inc-list"></div></div>
+  <div class="sbar sb-ne" id="inc-sbar">
+    <div class="sbrow"><span class="sblbl" id="inc-sbar-lbl">Monthly Total</span><span class="sbval sbv-gold" id="inc-total">$0.00</span></div>
+  </div>
+</div>
+
+<!-- BILLS -->
+<div class="pg" id="pg-bills">
+  <div class="fcard">
+    <div class="fhead fh-ne" id="bill-fhead">
+      <svg viewBox="0 0 100 100"><use href="#logo-ne"/></svg>
+      <span id="bill-fhead-text">Add Bill — Albert</span>
+    </div>
+    <div class="frow"><label class="flabel">Bill Name</label><input class="finput" id="bill-name" placeholder="e.g. Rent, Netflix, Car payment..."></div>
+    <div class="fg2">
+      <div><label class="flabel">Amount ($)</label><input class="finput" id="bill-amt" type="number" placeholder="0.00" step="0.01" min="0"></div>
+      <div><label class="flabel">Due Day of Month</label><input class="finput" id="bill-due" type="number" placeholder="1 – 31" min="1" max="31"></div>
+    </div>
+    <div class="fg2">
+      <div><label class="flabel">Category</label>
+        <select class="finput" id="bill-cat">
+          <option>Housing</option><option>Utilities</option><option>Insurance</option>
+          <option>Subscriptions</option><option>Transportation</option><option>Food</option>
+          <option>Debt</option><option>Other</option>
+        </select>
+      </div>
+      <div><label class="flabel">Status</label>
+        <select class="finput" id="bill-status"><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select>
+      </div>
+    </div>
+    <button class="btn-ne" id="bill-btn" onclick="addBill()">+ Add to Playbook</button>
+  </div>
+  <p class="sl">Bills This Month</p>
+  <div class="fcard" style="padding:10px 13px"><div class="ilist" id="bill-list"></div></div>
+  <div class="sbar sb-ne" id="bill-sbar">
+    <div class="sbrow"><span class="sblbl">Total Bills</span><span class="sbval sbv-red" id="bt-total">$0.00</span></div>
+    <div class="sbrow"><span class="sblbl">Paid</span><span class="sbval sbv-grn" id="bt-paid">$0.00</span></div>
+    <div class="sbdiv"></div>
+    <div class="sbrow"><span class="sblbl">Remaining</span><span class="sbval sbv-gold" id="bt-remain">$0.00</span></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="pg" id="pg-charts">
+  <p class="sl">Income Breakdown</p>
+  <div class="chart-row">
+    <div class="chart-box"><div class="chart-title">Income Split</div><canvas id="ch-donut" height="190"></canvas></div>
+    <div class="chart-box"><div class="chart-title">Bills by Category</div><canvas id="ch-cat" height="190"></canvas></div>
+  </div>
+  <p class="sl">Financial Health</p>
+  <div class="chart-row">
+    <div class="chart-box full"><div class="chart-title">Income vs Bills</div><canvas id="ch-bar" height="160"></canvas></div>
+  </div>
+  <p class="sl">Bills Timeline</p>
+  <div class="chart-row">
+    <div class="chart-box full"><div class="chart-title">Due Dates This Month</div><canvas id="ch-timeline" height="150"></canvas></div>
+  </div>
+  <p class="sl">Status &amp; Surplus</p>
+  <div class="chart-row">
+    <div class="chart-box"><div class="chart-title">Paid vs Unpaid</div><canvas id="ch-status" height="170"></canvas></div>
+    <div class="chart-box"><div class="chart-title">Surplus Gauge</div><canvas id="ch-gauge" height="170"></canvas></div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings">
+  <div class="settings-card">
+    <div class="settings-title">Google Sheets Connection</div>
+    <div id="conn-status" class="status-row">
+      <span class="status-dot sd-none"></span>
+      <span id="conn-status-text">Not configured</span>
+    </div>
+    <div class="settings-row">
+      <label class="flabel">Apps Script Web App URL</label>
+      <input class="finput" id="script-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" type="url">
+      <span class="settings-hint">Paste the deployment URL from your Google Apps Script. See the README for setup instructions.</span>
+    </div>
+    <button class="btn-save" onclick="saveScriptUrl()">Save &amp; Test Connection</button>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-title">Data Management</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-save" onclick="syncNow()" style="flex:1;min-width:120px">↻ Force Sync</button>
+      <button class="btn-save" onclick="clearLocal()" style="flex:1;min-width:120px;background:var(--sf)">⚠ Clear Local Cache</button>
+    </div>
+    <p class="settings-hint" style="margin-top:10px">Data is always read from Google Sheets on load. Local cache (localStorage) is used as a fast offline fallback. "Clear Local Cache" forces a fresh pull from Sheets on next load.</p>
+  </div>
+
+  <div class="settings-card">
+    <div class="settings-title">About</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.7">
+      Gridiron Budget — built for Albert &amp; Patty.<br>
+      Patriots navy · 49ers scarlet · Shared gold.<br>
+      <br>
+      Data lives in your private Google Sheet.<br>
+      This app only ever talks to <em>your</em> Apps Script URL.
+    </p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG & STATE
+═══════════════════════════════════════════ */
+const STORAGE_KEY_URL   = 'gb_script_url';
+const STORAGE_KEY_INC   = 'gb_income';
+const STORAGE_KEY_BILLS = 'gb_bills';
+
+let SCRIPT_URL = localStorage.getItem(STORAGE_KEY_URL) || '';
+let income     = loadLocal(STORAGE_KEY_INC,  []);
+let bills      = loadLocal(STORAGE_KEY_BILLS, []);
+let fund       = 'ne';
+let charts     = {};
+let syncing    = false;
+
+/* ═══════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════ */
+const fmt = n => '$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function loadLocal(k, def) {
+  try { return JSON.parse(localStorage.getItem(k)) || def; } catch { return def; }
+}
+function saveLocal(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+}
+
+function moAmt(i) {
+  const a = parseFloat(i.amount) || 0;
+  if (i.freq === 'biweekly') return a * 26 / 12;
+  if (i.freq === 'weekly')   return a * 52 / 12;
+  if (i.freq === 'annual')   return a / 12;
+  return a;
+}
+
+function toast(msg, type='info', dur=2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'toast', dur);
+}
+
+function showSpinner(text='SYNCING...') {
+  document.getElementById('spinner-text').textContent = text;
+  document.getElementById('spinner').classList.add('show');
+}
+function hideSpinner() {
+  document.getElementById('spinner').classList.remove('show');
+}
+
+function setSyncState(state) {
+  const btn = document.getElementById('syncBtn');
+  const lbl = document.getElementById('syncLabel');
+  btn.className = 'sync-btn ' + state;
+  if (state === 'syncing') lbl.textContent = 'SYNCING';
+  else if (state === 'ok') lbl.textContent = 'SYNCED';
+  else if (state === 'err') lbl.textContent = 'ERROR';
+  else lbl.textContent = 'SYNC';
+}
+
+function updateConnStatus(ok, msg) {
+  const row  = document.getElementById('conn-status');
+  const dot  = row.querySelector('.status-dot');
+  const text = document.getElementById('conn-status-text');
+  dot.className  = 'status-dot ' + (ok ? 'sd-ok' : 'sd-err');
+  text.textContent = msg;
+}
+
+/* ═══════════════════════════════════════════
+   GOOGLE APPS SCRIPT COMMUNICATION
+═══════════════════════════════════════════ */
+async function appsScriptGet() {
+  if (!SCRIPT_URL) throw new Error('No script URL configured.');
+  const resp = await fetch(SCRIPT_URL + '?action=get', { method:'GET' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return resp.json();
+}
+
+async function appsScriptPost(payload) {
+  if (!SCRIPT_URL) throw new Error('No script URL configured.');
+  const resp = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return resp.json();
+}
+
+async function syncNow() {
+  if (!SCRIPT_URL) {
+    toast('⚠ Add your Apps Script URL in Setup first.', 'err');
+    showPage('settings');
+    return;
+  }
+  if (syncing) return;
+  syncing = true;
+  setSyncState('syncing');
+  try {
+    const data = await appsScriptGet();
+    if (data.income)  { income = data.income;  saveLocal(STORAGE_KEY_INC, income); }
+    if (data.bills)   { bills  = data.bills;   saveLocal(STORAGE_KEY_BILLS, bills); }
+    setSyncState('ok');
+    updateConnStatus(true, 'Connected — last synced ' + new Date().toLocaleTimeString());
+    toast('✓ Synced with Google Sheets', 'ok');
+    updateAll();
+  } catch(e) {
+    setSyncState('err');
+    updateConnStatus(false, 'Error: ' + e.message);
+    toast('Sync failed: ' + e.message, 'err', 4000);
+  } finally {
+    syncing = false;
+  }
+}
+
+async function pushToSheets() {
+  if (!SCRIPT_URL) return;
+  try {
+    await appsScriptPost({ action: 'set', income, bills });
+  } catch(e) {
+    toast('⚠ Could not save to Sheets: ' + e.message, 'err', 4000);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════ */
+function saveScriptUrl() {
+  const val = document.getElementById('script-url').value.trim();
+  if (!val || !val.startsWith('https://')) {
+    toast('Please enter a valid https:// URL', 'err');
+    return;
+  }
+  SCRIPT_URL = val;
+  localStorage.setItem(STORAGE_KEY_URL, SCRIPT_URL);
+  toast('URL saved — testing connection...', 'info');
+  syncNow();
+}
+
+function clearLocal() {
+  if (!confirm('Clear local cache? The app will reload data from Google Sheets.')) return;
+  localStorage.removeItem(STORAGE_KEY_INC);
+  localStorage.removeItem(STORAGE_KEY_BILLS);
+  income = [];
+  bills  = [];
+  toast('Local cache cleared', 'info');
+  updateAll();
+  syncNow();
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function setFund(f) {
+  fund = f;
+  ['ne','sf','both'].forEach(x => {
+    document.getElementById('fb-'+x).className = 'fb' + (f===x ? ' act-'+x : '');
+  });
+  updateAll();
+}
+
+function showPage(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('act'));
+  document.getElementById('pg-'+id).classList.add('show');
+  document.getElementById('nt-'+id).classList.add('act');
+  if (id === 'charts') setTimeout(renderCharts, 80);
+  else if (id === 'settings') {
+    document.getElementById('script-url').value = SCRIPT_URL;
+    if (SCRIPT_URL) updateConnStatus(true, 'URL configured — sync to verify');
+  } else {
+    updateAll();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FILTERED DATA
+═══════════════════════════════════════════ */
+const filtInc  = () => fund === 'both' ? income : income.filter(i => i.owner === fund);
+const filtBill = () => fund === 'both' ? bills  : bills.filter(b => b.owner === fund);
+
+/* ═══════════════════════════════════════════
+   RENDER — ALL
+═══════════════════════════════════════════ */
+function updateAll() {
+  renderDash();
+  renderIncomePage();
+  renderBillsPage();
+  syncForms();
+}
+
+function syncForms() {
+  const isSf = fund === 'sf';
+  const logoId = isSf ? 'sf' : 'ne';
+  const logoSVG = `<svg viewBox="0 0 100 100"><use href="#logo-${logoId}"/></svg>`;
+  const who = fund === 'ne' ? 'Albert' : fund === 'sf' ? 'Patty' : 'Combined';
+
+  const incHead = document.getElementById('inc-fhead');
+  incHead.className = 'fhead ' + (isSf ? 'fh-sf' : 'fh-ne');
+  incHead.innerHTML = logoSVG + `<span>Add Income — ${who === 'Combined' ? 'Albert' : who}</span>`;
+
+  const billHead = document.getElementById('bill-fhead');
+  billHead.className = 'fhead ' + (isSf ? 'fh-sf' : 'fh-ne');
+  billHead.innerHTML = logoSVG + `<span>Add Bill — ${who === 'Combined' ? 'Albert' : who}</span>`;
+
+  document.getElementById('inc-btn').className  = isSf ? 'btn-sf' : 'btn-ne';
+  document.getElementById('bill-btn').className = isSf ? 'btn-sf' : 'btn-ne';
+  document.getElementById('inc-sbar').className  = 'sbar ' + (isSf ? 'sb-sf' : 'sb-ne');
+  document.getElementById('bill-sbar').className = 'sbar ' + (isSf ? 'sb-sf' : 'sb-ne');
+  document.getElementById('inc-sbar-lbl').textContent = who + ' — Monthly Total';
+}
+
+/* ── OWNER HELPERS ── */
+function ownerTag(o) {
+  if (o === 'ne') return `<span class="tag t-ne">Albert</span>`;
+  if (o === 'sf') return `<span class="tag t-sf">Patty</span>`;
+  return `<span class="tag" style="background:#2a3a50;color:#c8d8ea;font-family:'Oswald';font-size:9px;font-weight:700;letter-spacing:0.07em;padding:2px 7px;border-radius:4px;text-transform:uppercase">Shared</span>`;
+}
+function ownerLogo(o) {
+  const id = o === 'sf' ? 'sf' : 'ne';
+  return `<svg class="oa" viewBox="0 0 100 100"><use href="#logo-${id}"/></svg>`;
+}
+
+/* ── DASHBOARD ── */
+function renderDash() {
+  const inc  = filtInc();
+  const bl   = filtBill();
+  const totalInc  = inc.reduce((s,i)  => s + moAmt(i), 0);
+  const totalBill = bl.reduce((s,b)   => s + (parseFloat(b.amount)||0), 0);
+  const paidAmt   = bl.filter(b => b.status==='paid').reduce((s,b) => s + (parseFloat(b.amount)||0), 0);
+  const paidCt    = bl.filter(b => b.status==='paid').length;
+  const surplus   = totalInc - totalBill;
+  const pct       = totalInc > 0 ? Math.min(100, Math.round(totalBill/totalInc*100)) : 0;
+  const today     = new Date().getDate();
+  let html = '';
+
+  if (fund === 'both') {
+    const neI = income.filter(i=>i.owner==='ne'), sfI = income.filter(i=>i.owner==='sf');
+    const neB = bills.filter(b=>b.owner==='ne'),  sfB = bills.filter(b=>b.owner==='sf');
+    const neTI = neI.reduce((s,i)=>s+moAmt(i),0), sfTI = sfI.reduce((s,i)=>s+moAmt(i),0);
+    const neTB = neB.reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+    const sfTB = sfB.reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+    const neW  = totalInc>0 ? Math.round(neTB/totalInc*100) : 0;
+    const sfW  = totalInc>0 ? Math.round(sfTB/totalInc*100) : 0;
+
+    html += `<p class="sl">Combined Field Report</p>
+    <div class="mg">
+      <div class="mc mc-ne"><div class="mc-stripe s-silver"></div><div class="ml">Albert Income</div><div class="mv mv-gold">${fmt(neTI)}</div><div class="ms">${neI.length} source${neI.length!==1?'s':''}</div></div>
+      <div class="mc mc-sf"><div class="mc-stripe s-gold"></div><div class="ml">Patty Income</div><div class="mv mv-gold">${fmt(sfTI)}</div><div class="ms">${sfI.length} source${sfI.length!==1?'s':''}</div></div>
+      <div class="mc mc-dk"><div class="mc-stripe s-gold"></div><div class="ml">Household Income</div><div class="mv mv-gold">${fmt(totalInc)}</div><div class="ms">combined</div></div>
+      <div class="mc mc-darkred"><div class="mc-stripe s-gold"></div><div class="ml">Total Bills</div><div class="mv mv-red">${fmt(totalBill)}</div><div class="ms">${bl.length} bill${bl.length!==1?'s':''}</div></div>
+    </div>
+    <p class="sl">Net Surplus</p>
+    <div class="surplus-block" style="background:${surplus>=0?'#112e1e':'#2a1010'}">
+      <div class="ml" style="color:rgba(255,255,255,0.38)">After All Bills</div>
+      <div style="font-family:'Oswald',sans-serif;font-size:32px;color:${surplus>=0?'#7de0a8':'#ff8888'};line-height:1">${(surplus<0?'-':'')+fmt(surplus)}</div>
+      <div class="ms">${paidCt} of ${bl.length} bills paid · ${fmt(paidAmt)} cleared</div>
+    </div>
+    <p class="sl">Split Yard Line</p>
+    <div class="prog-card">
+      <div class="ph"><span class="pt">Bills by Owner</span><span class="pp">${pct}% utilized</span></div>
+      <div class="dual-prog"><div class="dp-ne" style="width:${neW}%"></div><div class="dp-sf" style="width:${sfW}%"></div></div>
+      <div class="dleg">
+        <span><span class="ddot" style="background:var(--ne)"></span>Albert ${fmt(neTB)}</span>
+        <span><span class="ddot" style="background:var(--sf2)"></span>Patty ${fmt(sfTB)}</span>
+        <span style="margin-left:auto">${fmt(Math.max(0,surplus))} free</span>
+      </div>
+    </div>
+    <p class="sl">All Bills</p>`;
+
+  } else {
+    const who = fund==='ne'?'Albert':'Patty';
+    const mc  = fund==='ne'?'mc-ne':'mc-sf';
+    const str = fund==='ne'?'s-silver':'s-gold';
+    const barCls = pct>=90?'bf-sf':pct>=70?'bf-gold':fund==='ne'?'bf-ne':'bf-sf';
+
+    html += `<p class="sl">${who}'s Field Report</p>
+    <div class="mg">
+      <div class="mc ${mc}"><div class="mc-stripe ${str}"></div><div class="ml">Income</div><div class="mv mv-gold">${fmt(totalInc)}</div><div class="ms">${inc.length} source${inc.length!==1?'s':''}</div></div>
+      <div class="mc mc-darkred"><div class="mc-stripe s-gold"></div><div class="ml">Bills</div><div class="mv mv-red">${fmt(totalBill)}</div><div class="ms">${bl.length} bill${bl.length!==1?'s':''}</div></div>
+      <div class="mc mc-dk"><div class="mc-stripe ${str}"></div><div class="ml">Surplus</div><div class="mv ${surplus>=0?'mv-grn':'mv-red'}">${(surplus<0?'-':'')+fmt(surplus)}</div><div class="ms">after bills</div></div>
+      <div class="mc mc-grn"><div class="mc-stripe s-gold"></div><div class="ml">Paid</div><div class="mv mv-grn">${fmt(paidAmt)}</div><div class="ms">${paidCt} of ${bl.length}</div></div>
+    </div>
+    <p class="sl">Yard Line</p>
+    <div class="prog-card">
+      <div class="ph"><span class="pt">Bills vs Income</span><span class="pp">${pct}%</span></div>
+      <div class="btrack"><div class="bfill ${barCls}" style="width:${pct}%"></div></div>
+      <div class="bsub"><span>${fmt(totalBill)} committed</span><span>${fmt(Math.max(0,surplus))} free</span></div>
+    </div>
+    <p class="sl">Upcoming Bills</p>`;
+  }
+
+  const sorted = [...bl].sort((a,b) => (parseInt(a.dueDay)||0)-(parseInt(b.dueDay)||0));
+  if (!bl.length) {
+    html += `<div class="empty">No bills yet — add them in Bills</div>`;
+  } else {
+    html += sorted.map(b => {
+      const due = parseInt(b.dueDay)||0, diff = due - today;
+      let tc='', tt='';
+      if (b.status==='paid')      { tc='t-paid'; tt='Paid'; }
+      else if (diff < 0)          { tc='t-ov';   tt='Overdue'; }
+      else if (diff <= 5)         { tc='t-due';  tt='In '+diff+'d'; }
+      else                        { tt = 'Day '+due; }
+      return `<div class="card"><div class="crow">
+        <div><div class="ctitle">${esc(b.name)}</div><div class="cmeta">${esc(b.category)}${fund==='both'?' · '+(b.owner==='ne'?'Albert':'Patty'):''}</div></div>
+        <div class="cright">${fund==='both'?ownerLogo(b.owner):''}
+        ${tc?`<span class="tag ${tc}">${tt}</span>`:(tt?`<span style="font-size:10px;color:var(--muted)">${tt}</span>`:'')}
+        <span class="camt ${b.status==='paid'?'ca-pos':'ca-neg'}">${fmt(b.amount)}</span>
+        </div></div></div>`;
+    }).join('');
+  }
+
+  html += `<p class="sl" style="margin-top:14px">Income Sources</p>`;
+  if (!inc.length) {
+    html += `<div class="empty">No income sources — add them in Income</div>`;
+  } else {
+    html += inc.map(i => `<div class="card"><div class="crow">
+      <div><div class="ctitle">${esc(i.name)}</div><div class="cmeta">${esc(i.freq)}</div></div>
+      <div class="cright">${fund==='both'?ownerLogo(i.owner):''}
+      <span class="camt ca-pos">${fmt(moAmt(i))}<span style="font-size:10px;color:var(--muted)">/mo</span></span>
+      </div></div></div>`).join('');
+  }
+
+  document.getElementById('dash-content').innerHTML = html;
+}
+
+/* ── INCOME PAGE ── */
+function renderIncomePage() {
+  const list = filtInc();
+  const el   = document.getElementById('inc-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">No income sources yet — add one above</div>`;
+  } else {
+    el.innerHTML = list.map(i => {
+      const ri = income.indexOf(i);
+      return `<div class="irow">
+        <div><div class="iname">${esc(i.name)}</div><div class="isub">${esc(i.freq)}</div></div>
+        <div class="iright">${fund==='both'?ownerTag(i.owner):''}
+        <span class="iamt" style="color:var(--grn)">${fmt(moAmt(i))}</span>
+        <button class="bdel" onclick="delIncome(${ri})" title="Delete">✕</button>
+        </div></div>`;
+    }).join('');
+  }
+  document.getElementById('inc-total').textContent = fmt(list.reduce((s,i)=>s+moAmt(i),0));
+}
+
+/* ── BILLS PAGE ── */
+function renderBillsPage() {
+  const list = filtBill();
+  const el   = document.getElementById('bill-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">No bills yet — add one above</div>`;
+  } else {
+    const sorted = [...list]
+      .map(b => ({...b, ri: bills.indexOf(b)}))
+      .sort((a,b) => (parseInt(a.dueDay)||0)-(parseInt(b.dueDay)||0));
+    el.innerHTML = sorted.map(b => `<div class="irow">
+      <div><div class="iname">${esc(b.name)}</div><div class="isub">${esc(b.category)} · Day ${b.dueDay||'—'}</div></div>
+      <div class="iright">${fund==='both'?ownerTag(b.owner):''}
+      <span class="tag ${b.status==='paid'?'t-paid':'t-due'}">${b.status}</span>
+      <span class="iamt" style="color:${b.status==='paid'?'var(--grn)':'var(--sf)'}">${fmt(b.amount)}</span>
+      <button class="btog" onclick="togglePaid(${b.ri})" title="${b.status==='paid'?'Mark unpaid':'Mark paid'}" style="color:${b.status==='paid'?'var(--grn)':'var(--muted)'}">✓</button>
+      <button class="bdel" onclick="delBill(${b.ri})" title="Delete">✕</button>
+      </div></div>`).join('');
+  }
+  const total = list.reduce((s,b)=>(s+(parseFloat(b.amount)||0)),0);
+  const paid  = list.filter(b=>b.status==='paid').reduce((s,b)=>(s+(parseFloat(b.amount)||0)),0);
+  document.getElementById('bt-total').textContent  = fmt(total);
+  document.getElementById('bt-paid').textContent   = fmt(paid);
+  document.getElementById('bt-remain').textContent = fmt(total-paid);
+}
+
+/* ═══════════════════════════════════════════
+   DATA MUTATIONS
+═══════════════════════════════════════════ */
+async function addIncome() {
+  const name   = document.getElementById('inc-name').value.trim();
+  const amount = parseFloat(document.getElementById('inc-amt').value);
+  const freq   = document.getElementById('inc-freq').value;
+  const owner  = fund === 'sf' ? 'sf' : 'ne';
+  if (!name || isNaN(amount) || amount <= 0) { toast('Enter a name and valid amount', 'err'); return; }
+  income.push({ id: Date.now(), name, amount, freq, owner });
+  saveLocal(STORAGE_KEY_INC, income);
+  document.getElementById('inc-name').value = '';
+  document.getElementById('inc-amt').value  = '';
+  updateAll();
+  await pushToSheets();
+  toast('Income source added', 'ok');
+}
+
+async function delIncome(idx) {
+  if (!confirm(`Remove "${income[idx].name}"?`)) return;
+  income.splice(idx, 1);
+  saveLocal(STORAGE_KEY_INC, income);
+  updateAll();
+  await pushToSheets();
+  toast('Removed', 'ok');
+}
+
+async function addBill() {
+  const name     = document.getElementById('bill-name').value.trim();
+  const amount   = parseFloat(document.getElementById('bill-amt').value);
+  const dueDay   = document.getElementById('bill-due').value;
+  const category = document.getElementById('bill-cat').value;
+  const status   = document.getElementById('bill-status').value;
+  const owner    = fund === 'sf' ? 'sf' : 'ne';
+  if (!name || isNaN(amount) || amount <= 0) { toast('Enter a name and valid amount', 'err'); return; }
+  bills.push({ id: Date.now(), name, amount, dueDay, category, status, owner });
+  saveLocal(STORAGE_KEY_BILLS, bills);
+  document.getElementById('bill-name').value = '';
+  document.getElementById('bill-amt').value  = '';
+  document.getElementById('bill-due').value  = '';
+  updateAll();
+  await pushToSheets();
+  toast('Bill added', 'ok');
+}
+
+async function delBill(idx) {
+  if (!confirm(`Remove "${bills[idx].name}"?`)) return;
+  bills.splice(idx, 1);
+  saveLocal(STORAGE_KEY_BILLS, bills);
+  updateAll();
+  await pushToSheets();
+  toast('Removed', 'ok');
+}
+
+async function togglePaid(idx) {
+  bills[idx].status = bills[idx].status === 'paid' ? 'unpaid' : 'paid';
+  saveLocal(STORAGE_KEY_BILLS, bills);
+  updateAll();
+  await pushToSheets();
+  toast(bills[idx].status === 'paid' ? '✓ Marked paid' : 'Marked unpaid', 'ok');
+}
+
+/* ═══════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════ */
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts() {
+  const inc  = filtInc();
+  const bl   = filtBill();
+  const neI  = income.filter(i=>i.owner==='ne').reduce((s,i)=>s+moAmt(i),0);
+  const sfI  = income.filter(i=>i.owner==='sf').reduce((s,i)=>s+moAmt(i),0);
+  const totalInc  = inc.reduce((s,i)=>s+moAmt(i),0);
+  const totalBill = bl.reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+  const paidAmt   = bl.filter(b=>b.status==='paid').reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+  const surplus   = Math.max(0, totalInc-totalBill);
+
+  Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+  Chart.defaults.color = '#5a6a82';
+
+  /* Donut — income split */
+  destroyChart('donut');
+  const dData = fund==='both'
+    ? { labels:['Albert','Patty'], data:[neI,sfI], colors:['#0b1f4b','#aa0000'] }
+    : { labels:['Income','Bills','Surplus'], data:[totalInc,totalBill,surplus], colors:[fund==='ne'?'#0b1f4b':'#aa0000','#c9a84c','#1e7a45'] };
+  if (dData.data.some(v=>v>0)) {
+    charts['donut'] = new Chart(document.getElementById('ch-donut'), {
+      type:'doughnut',
+      data:{labels:dData.labels, datasets:[{data:dData.data,backgroundColor:dData.colors,borderWidth:0,hoverOffset:6}]},
+      options:{responsive:true,cutout:'66%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8}}}}
+    });
+  }
+
+  /* Bar — bills by category */
+  destroyChart('cat');
+  const cats = {};
+  bl.forEach(b=>{const c=b.category||'Other';cats[c]=(cats[c]||0)+(parseFloat(b.amount)||0);});
+  const catKeys = Object.keys(cats);
+  const palette = ['#0b1f4b','#aa0000','#c9a84c','#1e7a45','#9aafc4','#e8c96a','#152d66','#c80000'];
+  if (catKeys.length) {
+    charts['cat'] = new Chart(document.getElementById('ch-cat'), {
+      type:'bar',
+      data:{labels:catKeys, datasets:[{data:catKeys.map(k=>Math.round(cats[k]*100)/100),backgroundColor:catKeys.map((_,i)=>palette[i%palette.length]),borderRadius:5,borderWidth:0}]},
+      options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},callback:v=>'$'+v}},y:{ticks:{font:{size:10}}}}}
+    });
+  }
+
+  /* Grouped bar — income vs bills */
+  destroyChart('bar');
+  if (fund === 'both') {
+    const neTB = bills.filter(b=>b.owner==='ne').reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+    const sfTB = bills.filter(b=>b.owner==='sf').reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+    charts['bar'] = new Chart(document.getElementById('ch-bar'), {
+      type:'bar',
+      data:{labels:['Income','Bills','Surplus'],datasets:[
+        {label:'Albert',data:[neI,neTB,Math.max(0,neI-neTB)],backgroundColor:'#0b1f4b',borderRadius:5,borderWidth:0},
+        {label:'Patty', data:[sfI,sfTB,Math.max(0,sfI-sfTB)],backgroundColor:'#aa0000',borderRadius:5,borderWidth:0},
+      ]},
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
+    });
+  } else {
+    charts['bar'] = new Chart(document.getElementById('ch-bar'), {
+      type:'bar',
+      data:{labels:['Income','Bills','Surplus'],datasets:[{data:[totalInc,totalBill,surplus],backgroundColor:[fund==='ne'?'#0b1f4b':'#aa0000','#c9a84c','#1e7a45'],borderRadius:6,borderWidth:0}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},callback:v=>'$'+v.toLocaleString()}}}}
+    });
+  }
+
+  /* Timeline bar — bills by due date */
+  destroyChart('timeline');
+  const tlBills = [...bl].filter(b=>parseInt(b.dueDay)>0).sort((a,b)=>parseInt(a.dueDay)-parseInt(b.dueDay));
+  if (tlBills.length) {
+    charts['timeline'] = new Chart(document.getElementById('ch-timeline'), {
+      type:'bar',
+      data:{
+        labels: tlBills.map(b=>b.name.length>10?b.name.slice(0,9)+'…':b.name),
+        datasets:[{
+          label:'Amount',
+          data:tlBills.map(b=>parseFloat(b.amount)||0),
+          backgroundColor:tlBills.map(b=>b.status==='paid'?'#1e7a45':b.owner==='sf'?'#aa0000':'#0b1f4b'),
+          borderRadius:5,borderWidth:0
+        }]
+      },
+      options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:ctx=>'Due day '+tlBills[ctx.dataIndex].dueDay+' · '+(tlBills[ctx.dataIndex].status)}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},callback:v=>'$'+v}}}}
+    });
+  }
+
+  /* Doughnut — paid vs unpaid */
+  destroyChart('status');
+  const unpaid = totalBill - paidAmt;
+  if (paidAmt > 0 || unpaid > 0) {
+    charts['status'] = new Chart(document.getElementById('ch-status'), {
+      type:'doughnut',
+      data:{labels:['Paid','Unpaid'],datasets:[{data:[paidAmt,unpaid],backgroundColor:['#1e7a45','#aa0000'],borderWidth:0,hoverOffset:5}]},
+      options:{responsive:true,cutout:'62%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8}}}}
+    });
+  }
+
+  /* Gauge — surplus % */
+  destroyChart('gauge');
+  const surplusPct = totalInc > 0 ? Math.max(0, Math.round((totalInc-totalBill)/totalInc*100)) : 0;
+  const gaugeColor = surplusPct>20?'#1e7a45':surplusPct>5?'#c9a84c':'#aa0000';
+  charts['gauge'] = new Chart(document.getElementById('ch-gauge'), {
+    type:'doughnut',
+    data:{labels:['Surplus','Used'],datasets:[{data:[Math.max(0,surplusPct),Math.max(0,100-surplusPct)],backgroundColor:[gaugeColor,'rgba(0,0,0,0.06)'],borderWidth:0,circumference:270,rotation:-135}]},
+    options:{responsive:true,cutout:'70%',plugins:{legend:{display:false}},layout:{padding:10}},
+    plugins:[{afterDraw(chart){
+      const{ctx,chartArea:{top,left,width,height}}=chart;
+      ctx.save();
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=gaugeColor;
+      ctx.font="700 24px 'Oswald',sans-serif";
+      ctx.fillText(surplusPct+'%',left+width/2,top+height*0.58);
+      ctx.fillStyle='#5a6a82';ctx.font="11px 'Source Sans 3',sans-serif";
+      ctx.fillText('surplus',left+width/2,top+height*0.73);
+      ctx.restore();
+    }}]
+  });
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+const now = new Date();
+document.getElementById('moPill').textContent = now.toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
+
+updateAll();
+
+/* Auto-sync on load if URL is configured */
+if (SCRIPT_URL) {
+  syncNow();
+}
+</script>
+</body>
+</html>
