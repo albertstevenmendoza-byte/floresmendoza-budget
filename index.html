@@ -208,6 +208,45 @@ canvas{display:block;width:100% !important;}
   .chart-row{grid-template-columns:1fr;}
   .chart-box.full{grid-column:1;}
 }
+
+/* ── ALERTS ── */
+.nav-tab-wrap{position:relative;flex:1;display:flex;align-items:stretch;}
+.nav-tab-wrap .nav-tab{flex:1;}
+.alert-badge{position:absolute;top:5px;right:6px;min-width:16px;height:16px;background:#e8c96a;color:#0b1f4b;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;pointer-events:none;transition:transform 0.2s;}
+.alert-badge.hidden{display:none;}
+.alert-badge.pop{animation:badgepop 0.3s ease;}
+@keyframes badgepop{0%{transform:scale(0.6);}60%{transform:scale(1.25);}100%{transform:scale(1);}}
+
+.alert-hero{border-radius:12px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:13px;border:1.5px solid transparent;}
+.ah-overdue{background:#2a1010;border-color:rgba(200,0,0,0.35);}
+.ah-today{background:#1a1200;border-color:rgba(201,168,76,0.4);}
+.ah-soon{background:#0d1a2e;border-color:rgba(154,175,196,0.3);}
+.ah-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;}
+.ahi-ov{background:rgba(200,0,0,0.25);}
+.ahi-today{background:rgba(201,168,76,0.2);}
+.ahi-soon{background:rgba(154,175,196,0.15);}
+.ah-body{flex:1;min-width:0;}
+.ah-name{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ah-ov .ah-name{color:#ff8888;}
+.ah-today .ah-name{color:var(--gold2);}
+.ah-soon .ah-name{color:var(--silver2);}
+.ah-meta{font-size:11px;margin-top:3px;color:rgba(255,255,255,0.4);}
+.ah-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.ah-amt{font-family:'Oswald',sans-serif;font-size:20px;color:white;line-height:1;}
+.ah-pill{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.07em;padding:3px 9px;border-radius:10px;text-transform:uppercase;}
+.pill-ov{background:rgba(200,0,0,0.4);color:#ffaaaa;}
+.pill-today{background:rgba(201,168,76,0.3);color:var(--gold2);}
+.pill-soon{background:rgba(154,175,196,0.2);color:var(--silver2);}
+.ah-paybtn{background:rgba(30,122,69,0.25);border:1px solid rgba(30,122,69,0.5);color:#7de0a8;font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;padding:4px 10px;border-radius:6px;cursor:pointer;text-transform:uppercase;transition:background 0.15s;white-space:nowrap;}
+.ah-paybtn:hover{background:rgba(30,122,69,0.45);}
+
+.alert-section-hdr{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin:16px 0 8px 2px;display:flex;align-items:center;gap:8px;}
+.alert-section-hdr span{flex:1;height:0.5px;background:var(--bd);}
+
+.all-clear{text-align:center;padding:40px 20px;}
+.all-clear-icon{font-size:48px;margin-bottom:12px;opacity:0.7;}
+.all-clear-title{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--grn);letter-spacing:0.04em;margin-bottom:6px;}
+.all-clear-sub{font-size:13px;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -285,11 +324,15 @@ canvas{display:block;width:100% !important;}
   </div>
 
   <div class="nav-tabs">
-    <div class="nav-tab act" id="nt-dash" onclick="showPage('dash')">Overview</div>
-    <div class="nav-tab" id="nt-income" onclick="showPage('income')">Income</div>
-    <div class="nav-tab" id="nt-bills" onclick="showPage('bills')">Bills</div>
-    <div class="nav-tab" id="nt-charts" onclick="showPage('charts')">Stats</div>
-    <div class="nav-tab" id="nt-settings" onclick="showPage('settings')">Setup</div>
+    <div class="nav-tab-wrap"><div class="nav-tab act" id="nt-dash" onclick="showPage('dash')">Overview</div></div>
+    <div class="nav-tab-wrap"><div class="nav-tab" id="nt-income" onclick="showPage('income')">Income</div></div>
+    <div class="nav-tab-wrap"><div class="nav-tab" id="nt-bills" onclick="showPage('bills')">Bills</div></div>
+    <div class="nav-tab-wrap"><div class="nav-tab" id="nt-charts" onclick="showPage('charts')">Stats</div></div>
+    <div class="nav-tab-wrap">
+      <div class="nav-tab" id="nt-alerts" onclick="showPage('alerts')">Alerts</div>
+      <div class="alert-badge hidden" id="alert-badge">0</div>
+    </div>
+    <div class="nav-tab-wrap"><div class="nav-tab" id="nt-settings" onclick="showPage('settings')">Setup</div></div>
   </div>
 </div>
 
@@ -359,6 +402,9 @@ canvas{display:block;width:100% !important;}
     <div class="sbrow"><span class="sblbl">Remaining</span><span class="sbval sbv-gold" id="bt-remain">$0.00</span></div>
   </div>
 </div>
+
+<!-- ALERTS -->
+<div class="pg" id="pg-alerts"><div id="alerts-content"></div></div>
 
 <!-- STATS -->
 <div class="pg" id="pg-charts">
@@ -589,6 +635,7 @@ function showPage(id) {
   document.getElementById('pg-'+id).classList.add('show');
   document.getElementById('nt-'+id).classList.add('act');
   if (id === 'charts') setTimeout(renderCharts, 80);
+  else if (id === 'alerts') renderAlerts();
   else if (id === 'settings') {
     document.getElementById('script-url').value = SCRIPT_URL;
     if (SCRIPT_URL) updateConnStatus(true, 'URL configured — sync to verify');
@@ -598,8 +645,120 @@ function showPage(id) {
 }
 
 /* ═══════════════════════════════════════════
-   FILTERED DATA
+   ALERTS
 ═══════════════════════════════════════════ */
+const ALERT_THRESHOLDS = { overdue: -1, today: 0, soon: 3 }; // days
+
+function classifyBill(b) {
+  if (b.status === 'paid') return null;
+  const due = parseInt(b.dueDay);
+  if (!due) return null;
+  const today = new Date().getDate();
+  const diff  = due - today;
+  if (diff < 0)  return { type: 'overdue', diff };
+  if (diff === 0) return { type: 'today',   diff };
+  if (diff <= 3)  return { type: 'soon',    diff };
+  return null;
+}
+
+function getAlertBills() {
+  // Always check ALL bills regardless of fund filter for global alert count
+  return bills
+    .map(b => ({ ...b, _cls: classifyBill(b) }))
+    .filter(b => b._cls !== null)
+    .sort((a, b) => a._cls.diff - b._cls.diff);
+}
+
+function updateAlertBadge() {
+  const count = getAlertBills().length;
+  const badge = document.getElementById('alert-badge');
+  if (count > 0) {
+    badge.textContent = count > 9 ? '9+' : count;
+    if (badge.classList.contains('hidden')) {
+      badge.classList.remove('hidden');
+      badge.classList.add('pop');
+      setTimeout(() => badge.classList.remove('pop'), 350);
+    } else {
+      badge.textContent = count > 9 ? '9+' : count;
+    }
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function renderAlerts() {
+  const alerts = getAlertBills();
+  const el = document.getElementById('alerts-content');
+
+  if (!alerts.length) {
+    el.innerHTML = `
+      <div class="all-clear">
+        <div class="all-clear-icon">🏆</div>
+        <div class="all-clear-title">All Clear — No Alerts</div>
+        <div class="all-clear-sub">All bills are paid or not yet due within 3 days.<br>Check back closer to your due dates.</div>
+      </div>`;
+    return;
+  }
+
+  const overdue = alerts.filter(b => b._cls.type === 'overdue');
+  const today   = alerts.filter(b => b._cls.type === 'today');
+  const soon    = alerts.filter(b => b._cls.type === 'soon');
+
+  let html = '';
+
+  const renderGroup = (items, sectionLabel, heroClass, iconClass, iconChar, pillClass, pillLabel) => {
+    if (!items.length) return '';
+    let out = `<div class="alert-section-hdr">${sectionLabel}<span></span></div>`;
+    out += items.map(b => {
+      const ownerLbl = b.owner === 'ne' ? 'Albert' : 'Patty';
+      const dueTxt   = b._cls.type === 'overdue'
+        ? `${Math.abs(b._cls.diff)} day${Math.abs(b._cls.diff) !== 1 ? 's' : ''} overdue`
+        : b._cls.type === 'today' ? 'Due today'
+        : `Due in ${b._cls.diff} day${b._cls.diff !== 1 ? 's' : ''}`;
+      const ri = bills.indexOf(bills.find(x => x.id === b.id));
+      return `
+        <div class="alert-hero ${heroClass}">
+          <div class="ah-icon ${iconClass}">${iconChar}</div>
+          <div class="ah-body ${b._cls.type === 'overdue' ? 'ah-ov' : b._cls.type === 'today' ? 'ah-today' : 'ah-soon'}">
+            <div class="ah-name">${esc(b.name)}</div>
+            <div class="ah-meta">${esc(b.category)} · ${ownerLbl} · Day ${b.dueDay}</div>
+          </div>
+          <div class="ah-right">
+            <div class="ah-amt">${fmt(b.amount)}</div>
+            <span class="ah-pill ${pillClass}">${dueTxt}</span>
+            <button class="ah-paybtn" onclick="markPaidFromAlert(${ri})">✓ Mark Paid</button>
+          </div>
+        </div>`;
+    }).join('');
+    return out;
+  };
+
+  html += renderGroup(overdue, 'Overdue', 'ah-overdue', 'ahi-ov', '!', 'pill-ov', 'Overdue');
+  html += renderGroup(today,   'Due Today', 'ah-today', 'ahi-today', '★', 'pill-today', 'Today');
+  html += renderGroup(soon,    'Coming Up (within 3 days)', 'ah-soon', 'ahi-soon', '◷', 'pill-soon', 'Soon');
+
+  // Summary footer
+  const totalOwed = alerts.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
+  html += `
+    <div style="background:var(--ne);border-radius:10px;padding:12px 14px;margin-top:8px;">
+      <div class="sbrow"><span class="sblbl">${alerts.length} alert${alerts.length !== 1 ? 's' : ''} total</span><span class="sbval sbv-red">${fmt(totalOwed)} outstanding</span></div>
+    </div>`;
+
+  el.innerHTML = html;
+}
+
+async function markPaidFromAlert(idx) {
+  if (idx < 0 || idx >= bills.length) return;
+  bills[idx].status = 'paid';
+  saveLocal(STORAGE_KEY_BILLS, bills);
+  updateAll();
+  renderAlerts();
+  updateAlertBadge();
+  await pushToSheets();
+  toast('✓ Marked paid', 'ok');
+}
+
+
 const filtInc  = () => fund === 'both' ? income : income.filter(i => i.owner === fund);
 const filtBill = () => fund === 'both' ? bills  : bills.filter(b => b.owner === fund);
 
@@ -611,6 +770,7 @@ function updateAll() {
   renderIncomePage();
   renderBillsPage();
   syncForms();
+  updateAlertBadge();
 }
 
 function syncForms() {
