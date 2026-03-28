@@ -428,7 +428,8 @@ const STORAGE_KEY_URL   = 'gb_script_url';
 const STORAGE_KEY_INC   = 'gb_income';
 const STORAGE_KEY_BILLS = 'gb_bills';
 
-let SCRIPT_URL = localStorage.getItem(STORAGE_KEY_URL) || '';
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYDe-jczfk4wyIVa5PVzd-xwyoKu01E8MDgjkePKr7jICfyEDAPAgIHdXJm7UMJ3IP/exec';
+let SCRIPT_URL = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_SCRIPT_URL;
 let income     = loadLocal(STORAGE_KEY_INC,  []);
 let bills      = loadLocal(STORAGE_KEY_BILLS, []);
 let fund       = 'ne';
